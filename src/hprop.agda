@@ -9,21 +9,21 @@
 --          http://www.cs.bham.ac.uk/~mhe/impredicativity/          
 ----------------------------------------------------------------------
 
-{-# OPTIONS --type-in-type #-}
 -- the following definition relies on type-in-type,
 -- which is switched on only in this module
 
-module impredicative.prop where
+module hprop where
 
 open import prelude
 
-record Ω : Set where
-  constructor prop
+record HProp (ℓ : Level) : Set (lsuc ℓ) where
   field
-    prf : Set
+    prf : Set ℓ
     equ : (u v : prf) → u ≡ v
 
-open Ω public
+open HProp public
 
-eq : (P : Ω){u v : prf P} → u ≡ v
+HProp₀ = HProp lzero
+
+eq : ∀ {ℓ} (P : HProp ℓ){u v : prf P} → u ≡ v
 eq P {u} {v} = equ P u v

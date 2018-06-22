@@ -13,7 +13,8 @@
 module interval where 
 
 open import prelude
-open import impredicative
+open import hprop
+open import logic
 
 ----------------------------------------------------------------------
 -- Interval
@@ -24,49 +25,7 @@ postulate
   O     : Int
   I     : Int
   O≠I   : O ≡ I → ∅
-  min   : Int → Int → Int
-  max   : Int → Int → Int
-  cntd   : (P : Int → Ω) → ((i : Int) → prf(P i or ¬(P i))) → P O ≡ P I
-
-minOi=O : (i : Int) → min O i ≡ O
-minOi=O i = primTrustMe
-
-minIi=i : (i : Int) → min I i ≡ i
-minIi=i i = primTrustMe
-
-miniO=O : (i : Int) → min i O ≡ O
-miniO=O i = primTrustMe
-
-miniI=i : (i : Int) → min i I ≡ i
-miniI=i i = primTrustMe
-
-maxOi=i : (i : Int) → max O i ≡ i
-maxOi=i i = primTrustMe
-
-maxIi=I : (i : Int) → max I i ≡ I
-maxIi=I i = primTrustMe
-
-maxiO=i : (i : Int) → max i O ≡ i
-maxiO=i i = primTrustMe
-
-maxiI=I : (i : Int) → max i I ≡ I
-maxiI=I i = primTrustMe
-
--- Adding the following rewrites should make proofs using the above identities 
--- easier (more comptational):
-
-{-# BUILTIN REWRITE _≡_ #-}
-{-# REWRITE minOi=O #-}
-{-# REWRITE minIi=i #-}
-{-# REWRITE miniO=O #-}
-{-# REWRITE miniI=i #-}
-{-# REWRITE maxOi=i #-}
-{-# REWRITE maxIi=I #-}
-{-# REWRITE maxiO=i #-}
-{-# REWRITE maxiI=I #-}
-
-cntd'  : (P : Int → Ω) → ((i : Int) → prf(P i or ¬(P i))) → (i : Int) → P i ≡ P I
-cntd' P dec i = cntd (λ j → P (max i j)) (λ j → dec (max i j))
+  cntd   : (P : Int → HProp₀) → ((i : Int) → prf(P i or ¬(P i))) → (i : Int) → P i ≡ P I
 
 -- Type for representing just the endpoints O and I
 data OI : Set where
@@ -86,41 +45,6 @@ data OI : Set where
 ⟨_⟩ : (e : OI) → Int
 ⟨ O' ⟩ = O
 ⟨ I' ⟩ = I
-
-cnx : OI → Int → Int → Int
-cnx O' = min
-cnx 1' = max
-
-cnxeei=e : (e : OI)(i : Int) → cnx e ⟨ e ⟩ i ≡ ⟨ e ⟩
-cnxeei=e O' i = refl
-cnxeei=e I' i = refl
-
-cnxeie=e : (e : OI)(i : Int) → cnx e i ⟨ e ⟩ ≡ ⟨ e ⟩
-cnxeie=e O' i = refl
-cnxeie=e I' i = refl
-
-cnx!eei=i : (e : OI)(i : Int) → cnx (! e) ⟨ e ⟩ i ≡ i
-cnx!eei=i O' i = refl
-cnx!eei=i I' i = refl
-
-cnx!eie=i : (e : OI)(i : Int) → cnx (! e) i ⟨ e ⟩ ≡ i
-cnx!eie=i O' i = refl
-cnx!eie=i I' i = refl
-
-cnxe!ei=i : (e : OI)(i : Int) → cnx e ⟨ ! e ⟩ i ≡ i
-cnxe!ei=i O' i = refl
-cnxe!ei=i I' i = refl
-
-cnxei!e=i : (e : OI)(i : Int) → cnx e i ⟨ ! e ⟩ ≡ i
-cnxei!e=i O' i = refl
-cnxei!e=i I' i = refl
-
-{-# REWRITE cnxeei=e #-}
-{-# REWRITE cnxeie=e #-}
-{-# REWRITE cnx!eei=i #-}
-{-# REWRITE cnx!eie=i #-}
-{-# REWRITE cnxe!ei=i #-}
-{-# REWRITE cnxei!e=i #-}
 
 e≠!e : {A : Set}{e : OI} → ⟨ e ⟩ ≡ ⟨ ! e ⟩ → A
 e≠!e {A} {O'} p = ∅-elim (O≠I p)
@@ -155,26 +79,6 @@ e!e-elim :
 e!e-elim {e = O'} = OI-elim
 e!e-elim {i }{e = I'} f u = OI-elim (λ{ (inl x) → f (inr x) ; (inr x) → f (inl x) })
   (∥∥-elim (λ{ (inl x) → ∣ inr x ∣ ; (inr x) → ∣ inl x ∣ }) (λ x x' → eq (i ≈ ⟨ O' ⟩ or i ≈ ⟨ I' ⟩)) u)
-
--- OI-elim-inl : 
---   {i : Int}
---   {B : Set}
---   (f : (i ≡ O) ⊎ (i ≡ I) → B)
---   (l : i ≡ O)
---   → ---------------------------
---   OI-elim f ∣ inl l ∣ ≡ f (inl l)
--- OI-elim-inl f refl = primTrustMe
--- {-# REWRITE OI-elim-inl #-}
-
--- OI-elim-inr : 
---   {i : Int}
---   {B : Set}
---   (f : (i ≡ O) ⊎ (i ≡ I) → B)
---   (r : i ≡ I)
---   → ---------------------------
---   OI-elim f ∣ inr r ∣ ≡ f (inr r)
--- OI-elim-inr f refl = primTrustMe
--- {-# REWRITE OI-elim-inr #-}
 
 -- The dependent version:
 OI-elim-dep :

@@ -13,85 +13,88 @@
 module cof where 
 
 open import prelude
-open import impredicative
+open import hprop
+open import logic
 open import interval
+open import shift
 
 infixr 4 _∨_
 infix  5 _↗_
 infix  6 _∙_
 
-----------------------------------------------------------------------
--- Cofibrant propositions
-----------------------------------------------------------------------
 postulate
- cof   : Ω → Ω
- cofO  : (i : Int) → prf (cof (i ≈ O))
- cofI  : (i : Int) → prf (cof (i ≈ I))
- cofor : (P Q : Ω) → prf (cof P ⊃ cof Q ⊃ cof(P or Q))
- cof&  : (P Q : Ω) → prf (cof P ⊃ (P ⊃ cof Q) ⊃ cof(P & Q))
- cof∀  : (P : Int → Ω) → prf ((All i ∈ Int , cof (P i)) ⊃ cof (All i ∈ Int , P i))
- 
-Cof : Set
-Cof = ⟦ P ∈ Ω ∣ cof P ⟧
+  Cof : Set
+  [_] : Cof → HProp₀
 
-[_] : Cof → Set
-[ φ ] = prf (fst φ)
+  cofFace : (i : Int)(e : OI) → Cof
+  cofFace-[] : (i : Int)(e : OI) → [ cofFace i e ] ≡ (i ≈ ⟨ e ⟩)
+  {-# REWRITE cofFace-[] #-}
 
-cofFalse : Cof
-fst cofFalse = ⊥
-snd cofFalse = subst (prf ∘ cof) (propext O≠I ∅-elim) (cofI O)
+  cofShift : ∀{r s} → prf (r ≈> s) → Cof
+  cofShift-[] : ∀{r s} (sh : prf (r ≈> s)) → [ cofShift sh ] ≡ (r ≈ s)
+  {-# REWRITE cofShift-[] #-}
 
-cofTrue : Cof
-fst cofTrue = ⊤
-snd cofTrue = subst (prf ∘ cof) (propext (λ _ → tt) (λ _ → refl)) (cofO O)
+  cof⊥ : Cof
+  cof⊥-[] : [ cof⊥ ] ≡ ⊥
+  {-# REWRITE cof⊥-[] #-}
 
-_≈O : (i : Int) → Cof
-fst (i ≈O) = i ≈ O
-snd (i ≈O) = cofO i
+  cofor : (P Q : Cof) → Cof
+  cofor-[] : (P Q : Cof) → [ cofor P Q ] ≡ ([ P ] or [ Q ])
+  {-# REWRITE cofor-[] #-}
 
-_≈I : (i : Int) → Cof
-fst (i ≈I) = i ≈ I
-snd (i ≈I) = cofI i
+  cof⊤ : Cof
+  cof⊤-[] : [ cof⊤ ] ≡ ⊤
+  {-# REWRITE cof⊤-[] #-}
 
-_≈OI_ : (i : Int)(e : OI) → Cof
-fst (i ≈OI e) = i ≈ ⟨ e ⟩
-snd (i ≈OI e) with e
-... | O' = cofO i
-... | I' = cofI i
+  cof& : (P Q : Cof) → Cof
+  cof&-[] : (P Q : Cof) → [ cof& P Q ] ≡ ([ P ] & [ Q ])
+  {-# REWRITE cof&-[] #-}
 
-_∨_ : Cof → Cof → Cof
-(P , u) ∨ (Q , v) = ((P or Q) , cofor P Q u v)
+  cof∀ : (P : Int → Cof) → Cof
+  cof∀-[] : (P : Int → Cof) → [ cof∀ P ] ≡ (All i ∈ Int , [ P i ])
+  {-# REWRITE cof∀-[] #-}
 
-_∧_ : Cof → Cof → Cof
-(P , u) ∧ (Q , v) = ((P & Q) , cof& P Q u (λ _ → v))
+----------------------------------------------------------------------
+-- Disjuntion
+----------------------------------------------------------------------
+_∨_ = cofor
 
-cofEq : {P Q : Cof} → fst P ≡ fst Q → P ≡ Q
-cofEq {P , cofP} {.P , cofP'} refl = cong (_,_ P) (equ (cof P) cofP cofP' )
+∨-rec : ∀{ℓ} (φ ψ : Cof) {C : Set ℓ}
+  (p : prf [ φ ] → C) (q : prf [ ψ ] → C)
+  → ((u : prf [ φ ])(v : prf [ ψ ]) → p u ≡ q v)
+  → (prf [ φ ∨ ψ ] → C)
+∨-rec φ ψ p q lap = ∥∥-elim
+  (λ {(inl u) → p u;
+      (inr v) → q v})
+  (λ {(inl u) (inl u') → cong p (equ [ φ ] u u');
+      (inl u) (inr v') → lap u v' ;
+      (inr v) (inl u') → symm (lap u' v);
+      (inr v) (inr v') → cong q (equ [ ψ ] v v')})
 
 ----------------------------------------------------------------------
 -- Cofibrant-partial function classifier
 ----------------------------------------------------------------------
 □ : Set → Set
-□ A = Σ φ ∈ Cof , ([ φ ] → A)
+□ A = Σ φ ∈ Cof , (prf [ φ ] → A)
 
-_↗_ : {A : Set} → □ A → A → Ω
-(φ , f) ↗ x = All u ∈ [ φ ] , f u ≈ x
+_↗_ : {A : Set} → □ A → A → HProp₀
+(φ , f) ↗ x = All u ∈ prf [ φ ] , f u ≈ x
 
 ----------------------------------------------------------------------
 -- Dependently typed paths
 ----------------------------------------------------------------------
-Π : (Int → Set) → Set
-Π A = (i : Int) → A i
+ΠI : (Int → Set) → Set
+ΠI A = (i : Int) → A i
 
-Π′ :
+ΠI′ :
   {A B : Int → Set}
   → ---------------------------------
-  ((i : Int) → A i → B i) → Π A → Π B
-Π′ F p i = F i (p i)
+  ((i : Int) → A i → B i) → ΠI A → ΠI B
+ΠI′ F p i = F i (p i)
 
 _∙_ :
   {A : Int → Set}
   → -------------------------
-  □(Π A) → (i : Int) → □(A i)
+  □(ΠI A) → (i : Int) → □(A i)
 (φ , f) ∙ i = (φ , λ u → f u i)
 

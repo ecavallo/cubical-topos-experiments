@@ -9,11 +9,14 @@
 --          http://www.cs.bham.ac.uk/~mhe/impredicativity/          
 ----------------------------------------------------------------------
 
+{-# OPTIONS --rewriting #-}
 module Data.functions where
 
 open import prelude
-open import impredicative
 open import interval
+open import hprop
+open import logic
+open import shift
 open import cof
 open import fibrations
 open import Data.products
@@ -32,30 +35,47 @@ FibΠid :
   (β : isFib B)
   → -----------
   isFib (Π' A B)
-FibΠid {A} {B} α β e p φ f g = (g₁ , extends) where
-  pₐ : (a : A (p ⟨ ! e ⟩)) → Π (A ∘ p)
-  pₐ a = fst (fill {A = A} (! e) α p cofFalse ∅-elim a (λ u → ∅-elim u))
-  pₐI≡a : (a : A (p ⟨ ! e ⟩)) → pₐ a ⟨ ! e ⟩ ≡ a
-  pₐI≡a a = snd (snd (fill {A = A} (! e) α p cofFalse ∅-elim a (λ u → ∅-elim u)))
-  q : (a : A (p ⟨ ! e ⟩)) → Int → Σ Int A
+FibΠid {A} {B} α β p r s sh φ f g = g₁ , (extends , trivial)
+  where
+  pₐ : (a : A (p s)) → ΠI (A ∘ p)
+  pₐ a i = fst (compToFill (A ∘ p) (α p) s i (shiftCompToFill (cflip sh) i) cof⊥ ∅-elim (a , λ u → ∅-elim u))
+
+  pₐs≡a : (a : A (p s)) → pₐ a s ≡ a
+  pₐs≡a a = symm (snd (snd (compToFill (A ∘ p) (α p) s s (shiftCompToFill (cflip sh) s) cof⊥ ∅-elim (a , λ u → ∅-elim u))) refl)
+
+  q : (a : A (p s)) → Int → Σ Int A
   q a i = (p i , pₐ a i)
-  f' : (a : A (p ⟨ ! e ⟩)) → [ φ ] → Π (B ∘ (q a))
+
+  f' : (a : A (p s)) → prf [ φ ] → ΠI (B ∘ (q a))
   f' a u i = f u i (pₐ a i)
-  b₀ : (a : A (p ⟨ ! e ⟩)) → ⟦ b ∈ (B (q a ⟨ e ⟩)) ∣ (φ , f' a) ∙ ⟨ e ⟩ ↗ b ⟧
-  b₀ a = (fst g (pₐ a ⟨ e ⟩) , (λ u → cong (λ f → f (pₐ a ⟨ e ⟩)) (snd g u)))
+
+  b₀ : (a : A (p s)) → ⟦ b ∈ (B (q a r)) ∣ (φ , f' a) ∙ r ↗ b ⟧
+  b₀ a = (fst g (pₐ a r) , (λ u → cong (λ f → f (pₐ a r)) (snd g u)))
+
   abstract
-    g₁ : (Π' A B) (p ⟨ ! e ⟩)
-    g₁ a = let b = fst (β e (q a) φ (f' a) (b₀ a)) in subst (λ a → B (p ⟨ ! e ⟩ , a)) (pₐI≡a a) b where
+    g₁ : (Π' A B) (p s)
+    g₁ a = subst (λ a → B (p s , a)) (pₐs≡a a) (fst (β (q a) r s sh φ (f' a) (b₀ a)))
+
   abstract
-   extends : prf ((φ , f) ∙ ⟨ ! e ⟩ ↗ g₁)
-   extends u = funext (λ a → substLemma (pₐI≡a a) (trans (f'I≡g₁ a) (fI≡f'I a))) where
-    substLemma : {a a' : A (p ⟨ ! e ⟩)}(eq : a' ≡ a){b : B (p ⟨ ! e ⟩ , a)}{b' : B (p ⟨ ! e ⟩ , a')}
-      → subst (λ a → B (p ⟨ ! e ⟩ , a)) (symm eq) b ≡ b' → b ≡ subst (λ a → B (p ⟨ ! e ⟩ , a)) eq b'
-    substLemma refl refl = refl
-    f'I≡g₁ : (a : A (p ⟨ ! e ⟩)) → f' a u ⟨ ! e ⟩ ≡ fst (β e (q a) φ (f' a) (b₀ a))
-    f'I≡g₁ a = snd (β e (q a) φ (f' a) (b₀ a)) u
-    fI≡f'I : (a : A (p ⟨ ! e ⟩)) → subst (λ a₁ → B (p ⟨ ! e ⟩ , a₁)) (symm (pₐI≡a a)) (snd ((φ , f) ∙ ⟨ ! e ⟩) u a) ≡ f' a u ⟨ ! e ⟩
-    fI≡f'I a = congdep (λ a' → f u ⟨ ! e ⟩ a') (symm (pₐI≡a a))
+    extends : prf ((φ , f) ∙ s ↗ g₁)
+    extends u = funext (λ a → substLemma (pₐs≡a a) (trans (f's≡g₁ a) (fs≡f's a))) where
+      substLemma : {a a' : A (p s)}(eq : a' ≡ a){b : B (p s , a)}{b' : B (p s , a')}
+        → subst (λ a → B (p s , a)) (symm eq) b ≡ b' → b ≡ subst (λ a → B (p s , a)) eq b'
+      substLemma refl refl = refl
+
+      f's≡g₁ : (a : A (p s)) → f' a u s ≡ fst (β (q a) r s sh φ (f' a) (b₀ a))
+      f's≡g₁ a = fst (snd (β (q a) r s sh φ (f' a) (b₀ a))) u
+
+      fs≡f's : (a : A (p s)) → subst (λ a₁ → B (p s , a₁)) (symm (pₐs≡a a)) (snd ((φ , f) ∙ s) u a) ≡ f' a u s
+      fs≡f's a = congdep (λ a' → f u s a') (symm (pₐs≡a a))
+
+  abstract
+    trivial : (eq : r ≡ s) → subst (Π' A B ∘ p) eq (fst g) ≡ g₁
+    trivial refl = funext λ a →
+      trans
+        (cong (subst (λ a → B (p s , a)) (pₐs≡a a)) (snd (snd (β (q a) r r sh φ (f' a) (b₀ a))) refl))
+        (symm (congdep (fst g) (pₐs≡a a)))
+
 
 FibΠ :
   {Γ : Set}
@@ -65,7 +85,7 @@ FibΠ :
   (β : isFib B)
   → -----------
   isFib (Π' A B)
-FibΠ {Γ} {A} {B} α β e p = FibΠid (reindex A α p) (reindex B β (p ×id)) e id
+FibΠ {Γ} {A} {B} α β p = FibΠid (reindex A α p) (reindex B β (p ×id)) id
 
 FibΠ' :
   {Γ : Set}
@@ -80,7 +100,7 @@ fst (Πext pointwise) i a = fst (pointwise a) i
 fst (snd (Πext pointwise)) = funext (λ a → fst (snd (pointwise a)))
 snd (snd (Πext pointwise)) = funext (λ a → snd (snd (pointwise a)))
   
-----------------------------------------------------------------------
+-- ----------------------------------------------------------------------
 -- Forming Π-types is stable under reindexing
 ----------------------------------------------------------------------
 reindexΠ :

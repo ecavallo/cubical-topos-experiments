@@ -9,6 +9,7 @@
 --          http://www.cs.bham.ac.uk/~mhe/impredicativity/          
 ----------------------------------------------------------------------
 
+{-# OPTIONS --rewriting #-}
 module prelude where
 
 open import Agda.Primitive public
@@ -43,6 +44,8 @@ _∘_ :
 -- Propositional equality
 ----------------------------------------------------------------------
 open import Agda.Builtin.Equality public
+
+{-# BUILTIN REWRITE _≡_ #-}
 
 trans :
   {ℓ : Level}
@@ -292,3 +295,9 @@ _×'_ : {A A' B B' : Set} → (A → A') → (B → B') → A × B → A' × B'
   → --------------------
   (x , y) ≡ (x' , y')
 ×ext refl refl = refl
+
+----------------------------------------------------------------------
+-- Dependent functions
+----------------------------------------------------------------------
+Π : {ℓ m : Level} (A : Set ℓ) (B : A → Set m) → Set (ℓ ⊔ m)
+Π A B = (a : A) → B a
