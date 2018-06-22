@@ -13,8 +13,10 @@
 module equivs where 
 
 open import prelude
-open import impredicative
+open import hprop
+open import logic
 open import interval
+open import shift
 open import cof
 open import fibrations
 open import Data.products
@@ -30,57 +32,74 @@ Contr : {Γ : Set} → (Γ → Set) → Set
 Contr {Γ} A = (x : Γ) → Contr' (A x)
 
 Ext' : Set → Set
-Ext' A = (φ : Cof)(f : [ φ ] → A) → ⟦ a ∈ A ∣ (φ , f) ↗ a ⟧
+Ext' A = (φ : Cof)(f : prf [ φ ] → A) → ⟦ a ∈ A ∣ (φ , f) ↗ a ⟧
 
 Ext : {Γ : Set} → (Γ → Set) → Set
 Ext {Γ} A = (x : Γ) → Ext' (A x)
 
 contr2ext : {Γ : Set}{A : Γ → Set} → isFib A → Contr A → Ext A
-contr2ext {Γ} {A} α ap x φ f = (fst a' , (λ u → trans (q u) (p u))) where
+contr2ext {Γ} {A} α ap x φ f = (fst a' , (λ u → trans (q u) (p u)))
+  where
   a : A x
   a = fst (ap x)
 
   c : (a' : A x) → a' ~ a
   c = snd (ap x)
 
-  path : [ φ ] → Int → A x
+  path : prf [ φ ] → Int → A x
   path u = fst (c (f u))
   
-  a' : ⟦ a' ∈ (A x) ∣ (φ , path) ∙ O ↗ a' ⟧
-  a' = α I' (λ _ → x) φ path (a , (λ u → snd (snd (c (f u)))))
+  a' : ⟦ a' ∈ (A x) ∣ (φ , path) ∙ O ↗ a' & (All eq ∈ I ≡ O , subst (λ _ → A x) eq a ≈ a') ⟧
+  a' = α (λ _ → x) I O (cflip O~>I) φ path (a , λ u → snd (snd (c (f u))))
 
-  p : (u : [ φ ]) → f u ≡ fst (c (f u)) O
+  p : (u : prf [ φ ]) → f u ≡ fst (c (f u)) O
   p u = symm (fst (snd (c (f u))))
 
-  q : (u : [ φ ]) → fst (c (f u)) O ≡ fst a'
-  q = snd a'
+  q : (u : prf [ φ ]) → fst (c (f u)) O ≡ fst a'
+  q = fst (snd a')
 
-contr2extFalse : {Γ : Set}{A : Γ → Set}(α : isFib A)(c : Contr A)(x : Γ)
-  → fst (contr2ext α c x cofFalse ∅-elim) ≡ fst (α I' (λ _ → x) cofFalse ∅-elim (fst (c x) , (λ ())))
-contr2extFalse {Γ} {A} α c x = 
-  proof:
-      fst (contr2ext α c x cofFalse ∅-elim)
-    ≡[ cong (λ hh' → fst (α I' (λ _ → x) cofFalse (fst hh') ((fst (c x)) , snd hh'))) equal ]≡
-      fst (α I' (λ _ → x) cofFalse ∅-elim (fst (c x) , (λ ())))
-  qed
-    where
-      path : [ cofFalse ] → Int → A x
-      path u = fst (snd (c x) (∅-elim u))
-      equal : _≡_ {A = Σ path ∈ ([ cofFalse ] → Int → A x) , prf ((cofFalse , path) ∙ I ↗ fst (c x))} (path , (λ u → snd (snd (snd (c x) (∅-elim u))))) (∅-elim , λ ())
-      equal = Σext (funext (λ ())) (funext (λ ()))
+-- contr2extFalse : {Γ : Set}{A : Γ → Set}(α : isFib A)(c : Contr A)(x : Γ)
+--   → fst (contr2ext α c x cof⊥ ∅-elim) ≡ fst (α I' (λ _ → x) cof⊥ ∅-elim (fst (c x) , (λ ())))
+-- contr2extFalse {Γ} {A} α c x = 
+--   proof:
+--       fst (contr2ext α c x cof⊥ ∅-elim)
+--     ≡[ cong (λ hh' → fst (α I' (λ _ → x) cof⊥ (fst hh') ((fst (c x)) , snd hh'))) equal ]≡
+--       fst (α I' (λ _ → x) cof⊥ ∅-elim (fst (c x) , (λ ())))
+--   qed
+--     where
+--       path : [ cof⊥ ] → Int → A x
+--       path u = fst (snd (c x) (∅-elim u))
+--       equal : _≡_ {A = Σ path ∈ ([ cof⊥ ] → Int → A x) , prf ((cof⊥ , path) ∙ I ↗ fst (c x))} (path , (λ u → snd (snd (snd (c x) (∅-elim u))))) (∅-elim , λ ())
+--       equal = Σext (funext (λ ())) (funext (λ ()))
 
 
 ext2fib : {Γ : Set}{A : Γ → Set} → Ext A → isFib A × Contr A
-ext2fib {A = A} ext = ((λ e p φ f a → ext (p ⟨ ! e ⟩) φ (λ z → f z ⟨ ! e ⟩)) , c) where
-  c : Contr A
-  fst (c x) = fst (ext x cofFalse ∅-elim)
-  fst (snd (c x) a) i = fst (ext x (i ≈O) (λ _ → a))
-  fst (snd (snd (c x) a)) = symm (snd (ext x (O ≈O) (λ _ → a)) refl)
-  snd (snd (snd (c x) a)) = cong (λ{(φ , f) → fst (ext x φ f)}) (Σext bothFalse bothElim) where
-    bothFalse : I ≈O ≡ cofFalse
-    bothFalse = cofEq (propext (O≠I ∘ symm) ∅-elim)
-    bothElim : subst (λ z → [ z ] → A x) bothFalse (λ _ → a) ≡ ∅-elim
-    bothElim = funext (λ false → ∅-elim false)
+fst (ext2fib {A = A} ext) p r s sh φ f a =
+  fst a' ,
+  (λ u → snd a' ∣ inl u ∣) ,
+  (λ eq → snd a' ∣ inr eq ∣)
+  where
+  φ' : Cof
+  φ' = φ ∨ cofShift (shiftCompToFill sh s)
+
+  f' : prf [ φ' ] → A (p s)
+  f' = ∨-rec φ (cofShift (shiftCompToFill sh s))
+    (λ u → f u s)
+    (λ eq → subst (A ∘ p) eq (fst a))
+    (λ {u refl → snd a u})
+
+  a' = ext (p s) φ' f'
+fst (snd (ext2fib ext) x) = fst (ext x cof⊥ ∅-elim)
+snd (snd (ext2fib {A = A} ext) x) a =
+  (λ i → fst (path i)) ,
+  symm (snd (path O) ∣ inl refl ∣) ,
+  symm (snd (path I) ∣ inr refl ∣)
+  where
+  ends : (i : Int) → prf (i ≈ O or i ≈ I) → A x
+  ends i = OI-elim (λ {(inl refl) → a; (inr refl) → fst (ext x cof⊥ ∅-elim)})
+
+  path : (i : Int) → ⟦ a' ∈ A x ∣ (cofFace i O' ∨ cofFace i I' , ends i) ↗ a' ⟧
+  path = λ i → ext x (cofFace i O' ∨ cofFace i I') (ends i)
 
 ----------------------------------------------------------------------
 -- Equivalences and quasi-inverses
@@ -101,28 +120,46 @@ fiberext : {A B : Set}{f : A → B}{b : B}{x y : Fiber f b} → fst x ≡ fst y 
 fiberext refl refl = Σext refl (PathExt refl)
 
 -- Singletons are contractible
-Sing : {A : Set} → A → Set
-Sing {A} a = Σ a' ∈ A , (a' ~ a)
+Sing' : {A : Set} → A → Set
+Sing' {A} a = Σ a' ∈ A , (a' ~ a)
 
-singExt : {A : Set}{a : A}{s s' : Sing a} → fst (snd s) ≡ fst (snd s') → s ≡ s'
+Sing : {Γ : Set}(A : Γ → Set) → (Σ Γ A → Set)
+Sing A (γ , a) = Sing' a
+
+singExt : {A : Set}{a : A}{s s' : Sing' a} → fst (snd s) ≡ fst (snd s') → s ≡ s'
 singExt {s = (_ , _ , refl , refl)} {s' = (_ , _ , refl , refl)} refl = refl
 
-singContr : {A : Set}(a : A) → Contr' (Sing a)
-fst (singContr {A} a) = a , reflPath' refl
-fst (fst (snd (singContr a) (a' , p)) i) = fst p i
-fst (snd (fst (snd (singContr a) (a' , p)) i)) j = fst p (max i j)
-fst (snd (snd (fst (snd (singContr a) (a' , p)) i))) = refl
-snd (snd (snd (fst (snd (singContr a) (a' , p)) i))) = snd (snd p)
-fst (snd (snd (singContr a) (a' , p))) = singExt refl
-snd (snd (snd (singContr a) (a' , p))) = singExt (funext (λ j → snd (snd p)))
+singContr : {Γ : Set}{A : Γ → Set} → isFib A → Contr (Sing A)
+fst (singContr {A = A} α (γ , a)) = a , reflPath' refl
+snd (singContr {A = A} α (γ , a)) (a' , p) =
+  (λ i → fst (square i O) ,
+         ((λ j → fst (square i j)) ,
+          refl ,
+          symm (snd (snd (square i I)) refl))) ,
+  singExt (funext (λ j → symm (fst (snd (square O j)) ∣ inl refl ∣))) ,
+  singExt (funext (λ j → symm (fst (snd (square I j)) ∣ inr refl ∣)))
 
--- The identity map is an equivalence
-idEquiv : {A : Set} → Equiv' {A} id
-idEquiv a = singContr a
+  where
+  ends : (i : Int) → prf (i ≈ O or i ≈ I) → Int → A γ
+  ends i = OI-elim (λ {(inl refl) → fst p; (inr refl) → λ _ → a})
 
--- This is a standard result in HoTT.
-postulate
- qinv2equiv :
-  {Γ : Set}{A B : Γ → Set}(α : isFib A)(β : isFib B)
-  (f : (x : Γ) → A x → B x) → ((x : Γ) → Qinv (f x)) → Equiv f
+  square : (i j : Int)
+    → ⟦ b ∈ A γ ∣ (cofFace i O' ∨ cofFace i I' , ends i) ∙ j ↗ b
+                  & (All eq ∈ (I ≡ j) , subst (λ _ → A γ) eq a ≈ b) ⟧
+  square i j =
+    compToFill _ (α (λ _ → γ)) I j (shiftCompToFill (cflip O~>I) j)
+      (cofFace i O' ∨ cofFace i I')
+      (ends i)
+      (a , 
+       OI-elim-dep λ {(inl refl) → snd (snd p); (inr refl) → refl})
+
+-- The identity map at a fibration is an equivalence
+idEquiv : {Γ : Set}{A : Γ → Set} → isFib A → Equiv {A = A} (λ _ a → a)
+idEquiv α γ a = singContr α (γ , a)
+
+-- -- This is a standard result in HoTT.
+-- postulate
+--  qinv2equiv :
+--   {Γ : Set}{A B : Γ → Set}(α : isFib A)(β : isFib B)
+--   (f : (x : Γ) → A x → B x) → ((x : Γ) → Qinv (f x)) → Equiv f
 
