@@ -20,8 +20,6 @@ open import interval
 record ShiftSet : Set₁ where
   field
     Shift : Int → Int → HProp₀
-
-  field
     flipshift : {r s : Int} → prf (Shift r s) → prf (Shift s r)
 
 open ShiftSet public
