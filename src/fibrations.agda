@@ -24,7 +24,7 @@ open import cof
 ----------------------------------------------------------------------
 ShiftComp : (S : ShiftSet) → (Int → Set) → Set
 ShiftComp S A = ∀ r s →
-  (sh : prf (Shift S r s))(φ : Cof)(f : prf [ φ ] → ΠI A) →
+  (sh : prf (Shift S r s))(φ : Cof)(f : [ φ ] → ΠI A) →
   (x₁ : ⟦ x₁ ∈ (A r) ∣ (φ , f) ∙ r ↗ x₁ ⟧) →
   ⟦ x₀ ∈ (A s) ∣ ((φ , f) ∙ s ↗ x₀) & (All eq ∈ (r ≡ s) , subst A eq (fst x₁) ≈ x₀)  ⟧
 
@@ -42,7 +42,7 @@ fillToComp = shiftCompMap compShift fillShift (λ r s sh → shiftCompToFill sh 
 postulate
   compToFill : (A : Int → Set) → Comp A → Fill A
   compToFill-β : (A : Int → Set)(α : Comp A)(r s : Int)
-    (sh : prf (r ~> s))(φ : Cof)(f : prf [ φ ] → ΠI A) →
+    (sh : prf (r ~> s))(φ : Cof)(f : [ φ ] → ΠI A) →
     (x₁ : ⟦ x₁ ∈ (A r) ∣ (φ , f) ∙ r ↗ x₁ ⟧)
     → compToFill A α r s (shiftCompToFill sh s) φ f x₁ ≡ α r s sh φ f x₁
   {-# REWRITE compToFill-β #-}
@@ -173,7 +173,7 @@ FibIso A B iso α p r s sh φ q b = b'
   g : (i : Int) → B (p i) → A (p i)
   g i = fst (snd (iso (p i)))
 
-  q' : prf [ φ ] → ΠI (A ∘ p)
+  q' : [ φ ] → ΠI (A ∘ p)
   q' u i = g i (q u i)
 
   a : ⟦ a ∈ ((A ∘ p) r) ∣ ((φ , q') ∙ r) ↗ a ⟧
@@ -206,27 +206,27 @@ FibIso A B iso α p r s sh φ q b = b'
 -- Compatible partial functions
 ----------------------------------------------------------------------
 _⌣_ : {A : Set} → □ A → □ A → HProp₀
-(φ , f) ⌣ (ψ , g) = All u ∈ prf [ φ ] , All v ∈ prf [ ψ ] , f u ≈ g v
+(φ , f) ⌣ (ψ , g) = All u ∈ [ φ ] , All v ∈ [ ψ ] , f u ≈ g v
 
 _∪_ :
   {A : Set}
   {φ ψ : Cof}
-  (f : prf [ φ ] → A)
-  (g : prf [ ψ ] → A)
+  (f : [ φ ] → A)
+  (g : [ ψ ] → A)
   {p : prf((φ , f) ⌣ (ψ , g))}
   → ---------------------------
-  prf [ φ ∨ ψ ] → A
+  [ φ ∨ ψ ] → A
 _∪_ {A} {φ} {ψ} f g {p} w = ∥∥-elim h q w where
 
-  h : prf [ φ ] ⊎ prf [ ψ ] → A
+  h : [ φ ] ⊎ [ ψ ] → A
   h (inl u) = f u
   h (inr v) = g v
 
-  q : (z z' : prf [ φ ] ⊎ prf [ ψ ]) → h z ≡ h z'
-  q (inl _) (inl _) = cong f (eq [ φ ])
+  q : (z z' : [ φ ] ⊎ [ ψ ]) → h z ≡ h z'
+  q (inl _) (inl _) = cong f (eq [ φ ]ᴾ)
   q (inl u) (inr v) = p u v
   q (inr v) (inl u) = symm (p u v)
-  q (inr _) (inr _) = cong g (eq [ ψ ])
+  q (inr _) (inr _) = cong g (eq [ ψ ]ᴾ)
 
 -- ----------------------------------------------------------------------
 -- -- Path filling from path composition

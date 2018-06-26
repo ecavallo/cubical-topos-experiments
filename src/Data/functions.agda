@@ -46,7 +46,7 @@ FibΠid {A} {B} α β p r s sh φ f g = g₁ , (extends , trivial)
   q : (a : A (p s)) → Int → Σ Int A
   q a i = (p i , pₐ a i)
 
-  f' : (a : A (p s)) → prf [ φ ] → ΠI (B ∘ (q a))
+  f' : (a : A (p s)) → [ φ ] → ΠI (B ∘ (q a))
   f' a u i = f u i (pₐ a i)
 
   b₀ : (a : A (p s)) → ⟦ b ∈ (B (q a r)) ∣ (φ , f' a) ∙ r ↗ b ⟧

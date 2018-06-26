@@ -141,14 +141,14 @@ abstract
     isFib (Path A)
   FibPathId {A} α p r s sh φ f path₀ = (path₁ , (fExtends , trivial))
     where
-    f' : Int → prf [ φ ] → ΠI (A ∘ fst ∘ p)
+    f' : Int → [ φ ] → ΠI (A ∘ fst ∘ p)
     f' i u j = fst (f u j) i
 
     f₀ : (i : Int) → ⟦ g ∈ (i ≡ O → ΠI (A ∘ fst ∘ p)) ∣ (φ , f' i) ⌣ (cofFace i O' , g) ⟧
     fst (f₀ i) _ j = fst (snd (p j))
     snd (f₀ .O) u refl = funext (λ j → fst (snd (f u j)))
 
-    f₀' : (i : Int) → prf [ φ ∨ cofFace i O' ] → ΠI (A ∘ fst ∘ p)
+    f₀' : (i : Int) → [ φ ∨ cofFace i O' ] → ΠI (A ∘ fst ∘ p)
     f₀' i = _∪_ {φ = φ} {ψ = cofFace i O'} (f' i) (fst (f₀ i)) {p = snd (f₀ i)}
 
     f₁ : (i : Int) → ⟦ g ∈ (i ≡ I → ΠI (A ∘ fst ∘ p)) ∣ ((φ ∨ cofFace i O') , f₀' i) ⌣ (cofFace i I' , g) ⟧
@@ -156,7 +156,7 @@ abstract
     snd (f₁ .I) u refl = funext (λ j →
       or-elim-eq (λ v → f₀' I v j) (snd (snd (p j))) (λ {u'} → snd (snd (f u' j))) (λ {I≡O} → ∅-elim (O≠I (symm I≡O))) u)
 
-    f₁' : (i : Int) → prf [ (φ ∨ cofFace i O') ∨ cofFace i I' ] → ΠI (A ∘ fst ∘ p)
+    f₁' : (i : Int) → [ (φ ∨ cofFace i O') ∨ cofFace i I' ] → ΠI (A ∘ fst ∘ p)
     f₁' i = _∪_ {φ = φ ∨ cofFace i O'} {ψ = cofFace i I'} (f₀' i) (fst (f₁ i)) {p = snd (f₁ i)}
 
     extends : (i : Int) → prf ((((φ ∨ cofFace i O') ∨ cofFace i I') , f₁' i) ∙ r ↗ fst (fst path₀) i)
@@ -166,12 +166,12 @@ abstract
       rightCase : (i : Int)(eq : i ≡ I) → f₁' i ∣ inr eq ∣ r ≡ fst (fst path₀) i
       rightCase .I refl = symm (snd (snd (fst path₀)))
 
-      leftCase : (l : prf [ φ ∨ cofFace i O' ]) → f₁' i ∣ inl l ∣ r ≡ fst (fst path₀) i
+      leftCase : (l : [ φ ∨ cofFace i O' ]) → f₁' i ∣ inl l ∣ r ≡ fst (fst path₀) i
       leftCase l = or-elim-eq (λ v → f₁' i ∣ inl v ∣ r) (fst (fst path₀) i) (λ {l} → llCase l) (λ {r} → rlCase i r) l
         where
         rlCase : (i : Int)(eq : i ≡ O) → f₁' i ∣ inl ∣ inr eq ∣ ∣ r ≡ fst (fst path₀) i
         rlCase .O refl = symm (fst (snd (fst path₀)))
-        llCase : (l : prf [ φ ]) → f₁' i ∣ inl ∣ inl l ∣ ∣ r ≡ fst (fst path₀) i
+        llCase : (l : [ φ ]) → f₁' i ∣ inl ∣ inl l ∣ ∣ r ≡ fst (fst path₀) i
         llCase u = cong (λ p → fst p i) (snd path₀ u)
 
     comp : (i : Int) →

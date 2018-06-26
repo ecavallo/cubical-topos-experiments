@@ -37,7 +37,7 @@ abstract
   FibΣid {A} {B} α β p r s sh φ f ((a₀ , b₀) , extendsF) =
     (fst (aᵢ s) , fst b₁) , (extends , trivial)
     where
-    g : prf [ φ ] → ΠI (A ∘ p)
+    g : [ φ ] → ΠI (A ∘ p)
     g u i = fst (f u i)
 
     a₀ExtendsG : prf ((φ , g) ∙ r ↗ a₀)
@@ -49,7 +49,7 @@ abstract
     q : Int → (Σ x ∈ Int , A x)
     q i = (p i , fst (aᵢ i))
 
-    h : prf [ φ ] → ΠI (B ∘ q)
+    h : [ φ ] → ΠI (B ∘ q)
     h u i = subst (λ a → B (p i , a)) (fst (snd (aᵢ i)) u) (snd (f u i))
 
     b₀' : (B ∘ q) r

@@ -24,61 +24,63 @@ infix  6 _∙_
 
 postulate
   Cof : Set
-  [_] : Cof → HProp₀
+  [_]ᴾ : Cof → HProp₀
 
   cofFace : (i : Int)(e : OI) → Cof
-  cofFace-[] : (i : Int)(e : OI) → [ cofFace i e ] ≡ (i ≈ ⟨ e ⟩)
-  {-# REWRITE cofFace-[] #-}
+  cofFace-[]ᴾ : (i : Int)(e : OI) → [ cofFace i e ]ᴾ ≡ (i ≈ ⟨ e ⟩)
+  {-# REWRITE cofFace-[]ᴾ #-}
 
   cofShift : ∀{r s} → prf (r ≈> s) → Cof
-  cofShift-[] : ∀{r s} (sh : prf (r ≈> s)) → [ cofShift sh ] ≡ (r ≈ s)
-  {-# REWRITE cofShift-[] #-}
+  cofShift-[]ᴾ : ∀{r s} (sh : prf (r ≈> s)) → [ cofShift sh ]ᴾ ≡ (r ≈ s)
+  {-# REWRITE cofShift-[]ᴾ #-}
 
   cof⊥ : Cof
-  cof⊥-[] : [ cof⊥ ] ≡ ⊥
-  {-# REWRITE cof⊥-[] #-}
+  cof⊥-[]ᴾ : [ cof⊥ ]ᴾ ≡ ⊥
+  {-# REWRITE cof⊥-[]ᴾ #-}
 
   cofor : (P Q : Cof) → Cof
-  cofor-[] : (P Q : Cof) → [ cofor P Q ] ≡ ([ P ] or [ Q ])
-  {-# REWRITE cofor-[] #-}
+  cofor-[]ᴾ : (P Q : Cof) → [ cofor P Q ]ᴾ ≡ ([ P ]ᴾ or [ Q ]ᴾ)
+  {-# REWRITE cofor-[]ᴾ #-}
 
   cof⊤ : Cof
-  cof⊤-[] : [ cof⊤ ] ≡ ⊤
-  {-# REWRITE cof⊤-[] #-}
+  cof⊤-[]ᴾ : [ cof⊤ ]ᴾ ≡ ⊤
+  {-# REWRITE cof⊤-[]ᴾ #-}
 
   cof& : (P Q : Cof) → Cof
-  cof&-[] : (P Q : Cof) → [ cof& P Q ] ≡ ([ P ] & [ Q ])
-  {-# REWRITE cof&-[] #-}
+  cof&-[]ᴾ : (P Q : Cof) → [ cof& P Q ]ᴾ ≡ ([ P ]ᴾ & [ Q ]ᴾ)
+  {-# REWRITE cof&-[]ᴾ #-}
 
   cof∀ : (P : Int → Cof) → Cof
-  cof∀-[] : (P : Int → Cof) → [ cof∀ P ] ≡ (All i ∈ Int , [ P i ])
-  {-# REWRITE cof∀-[] #-}
+  cof∀-[]ᴾ : (P : Int → Cof) → [ cof∀ P ]ᴾ ≡ (All i ∈ Int , [ P i ]ᴾ)
+  {-# REWRITE cof∀-[]ᴾ #-}
+
+[_] = prf ∘ [_]ᴾ
 
 ----------------------------------------------------------------------
--- Disjuntion
+-- Disjunction
 ----------------------------------------------------------------------
 _∨_ = cofor
 
 ∨-rec : ∀{ℓ} (φ ψ : Cof) {C : Set ℓ}
-  (p : prf [ φ ] → C) (q : prf [ ψ ] → C)
-  → ((u : prf [ φ ])(v : prf [ ψ ]) → p u ≡ q v)
-  → (prf [ φ ∨ ψ ] → C)
+  (p : [ φ ] → C) (q : [ ψ ] → C)
+  → ((u : [ φ ])(v : [ ψ ]) → p u ≡ q v)
+  → ([ φ ∨ ψ ] → C)
 ∨-rec φ ψ p q lap = ∥∥-elim
   (λ {(inl u) → p u;
       (inr v) → q v})
-  (λ {(inl u) (inl u') → cong p (equ [ φ ] u u');
+  (λ {(inl u) (inl u') → cong p (eq [ φ ]ᴾ);
       (inl u) (inr v') → lap u v' ;
       (inr v) (inl u') → symm (lap u' v);
-      (inr v) (inr v') → cong q (equ [ ψ ] v v')})
+      (inr v) (inr v') → cong q (eq [ ψ ]ᴾ)})
 
 ----------------------------------------------------------------------
 -- Cofibrant-partial function classifier
 ----------------------------------------------------------------------
 □ : Set → Set
-□ A = Σ φ ∈ Cof , (prf [ φ ] → A)
+□ A = Σ φ ∈ Cof , ([ φ ] → A)
 
 _↗_ : {A : Set} → □ A → A → HProp₀
-(φ , f) ↗ x = All u ∈ prf [ φ ] , f u ≈ x
+(φ , f) ↗ x = All u ∈ [ φ ] , f u ≈ x
 
 ----------------------------------------------------------------------
 -- Dependently typed paths
