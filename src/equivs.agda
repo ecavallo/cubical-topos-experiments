@@ -32,7 +32,7 @@ Contr : {Γ : Set} → (Γ → Set) → Set
 Contr {Γ} A = (x : Γ) → Contr' (A x)
 
 Ext' : Set → Set
-Ext' A = (φ : Cof)(f : prf [ φ ] → A) → ⟦ a ∈ A ∣ (φ , f) ↗ a ⟧
+Ext' A = (φ : Cof)(f : [ φ ] → A) → ⟦ a ∈ A ∣ (φ , f) ↗ a ⟧
 
 Ext : {Γ : Set} → (Γ → Set) → Set
 Ext {Γ} A = (x : Γ) → Ext' (A x)
@@ -46,16 +46,16 @@ contr2ext {Γ} {A} α ap x φ f = (fst a' , (λ u → trans (q u) (p u)))
   c : (a' : A x) → a' ~ a
   c = snd (ap x)
 
-  path : prf [ φ ] → Int → A x
+  path : [ φ ] → Int → A x
   path u = fst (c (f u))
   
   a' : ⟦ a' ∈ (A x) ∣ (φ , path) ∙ O ↗ a' & (All eq ∈ I ≡ O , subst (λ _ → A x) eq a ≈ a') ⟧
-  a' = α (λ _ → x) I O (cflip O~>I) φ path (a , λ u → snd (snd (c (f u))))
+  a' = α int (λ _ → x) I O (cflip int O~>I) φ path (a , λ u → snd (snd (c (f u))))
 
-  p : (u : prf [ φ ]) → f u ≡ fst (c (f u)) O
+  p : (u : [ φ ]) → f u ≡ fst (c (f u)) O
   p u = symm (fst (snd (c (f u))))
 
-  q : (u : prf [ φ ]) → fst (c (f u)) O ≡ fst a'
+  q : (u : [ φ ]) → fst (c (f u)) O ≡ fst a'
   q = fst (snd a')
 
 -- contr2extFalse : {Γ : Set}{A : Γ → Set}(α : isFib A)(c : Contr A)(x : Γ)
@@ -74,16 +74,16 @@ contr2ext {Γ} {A} α ap x φ f = (fst a' , (λ u → trans (q u) (p u)))
 
 
 ext2fib : {Γ : Set}{A : Γ → Set} → Ext A → isFib A × Contr A
-fst (ext2fib {A = A} ext) p r s sh φ f a =
+fst (ext2fib {A = A} ext) S p r s sh φ f a =
   fst a' ,
   (λ u → snd a' ∣ inl u ∣) ,
   (λ eq → snd a' ∣ inr eq ∣)
   where
   φ' : Cof
-  φ' = φ ∨ cofShift (shiftCompToFill sh s)
+  φ' = φ ∨ cofShift S (shiftCompToFill S sh s)
 
-  f' : prf [ φ' ] → A (p s)
-  f' = ∨-rec φ (cofShift (shiftCompToFill sh s))
+  f' : [ φ' ] → A (p s)
+  f' = ∨-rec φ (cofShift S (shiftCompToFill S sh s))
     (λ u → f u s)
     (λ eq → subst (A ∘ p) eq (fst a))
     (λ {u refl → snd a u})
@@ -147,7 +147,7 @@ snd (singContr {A = A} α (γ , a)) (a' , p) =
     → ⟦ b ∈ A γ ∣ (cofFace i O' ∨ cofFace i I' , ends i) ∙ j ↗ b
                   & (All eq ∈ (I ≡ j) , subst (λ _ → A γ) eq a ≈ b) ⟧
   square i j =
-    compToFill _ (α (λ _ → γ)) I j (shiftCompToFill (cflip O~>I) j)
+    compToFill int _ (α int (λ _ → γ)) I j (shiftCompToFill int (cflip int O~>I) j)
       (cofFace i O' ∨ cofFace i I')
       (ends i)
       (a , 
