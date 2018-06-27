@@ -36,11 +36,11 @@ funext _ = primTrustMe
 ----------------------------------------------------------------------
 -- Proposition extensionality using primTrustMe
 ----------------------------------------------------------------------
-propext : ∀{ℓ}
-  {P Q : HProp ℓ}
-  → ---------------------------------------
-  (prf P → prf Q) → (prf Q → prf P) → P ≡ Q
-propext _ _ = primTrustMe
+-- propext : ∀{ℓ}
+--   {P Q : HProp ℓ}
+--   → ---------------------------------------
+--   (prf P → prf Q) → (prf Q → prf P) → P ≡ Q
+-- propext _ _ = primTrustMe
 
 ----------------------------------------------------------------------
 -- Comprehension

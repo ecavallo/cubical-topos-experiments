@@ -80,10 +80,10 @@ fst (ext2fib {A = A} ext) S p r s sh φ f a =
   (λ eq → snd a' ∣ inr eq ∣)
   where
   φ' : Cof
-  φ' = φ ∨ cofShift S (shiftCompToFill S sh s)
+  φ' = φ ∨ cofCShift S sh
 
   f' : [ φ' ] → A (p s)
-  f' = ∨-rec φ (cofShift S (shiftCompToFill S sh s))
+  f' = ∨-rec φ (cofCShift S sh)
     (λ u → f u s)
     (λ eq → subst (A ∘ p) eq (fst a))
     (λ {u refl → snd a u})

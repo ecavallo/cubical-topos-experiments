@@ -220,17 +220,7 @@ _∪_ :
   {p : prf((φ , f) ⌣ (ψ , g))}
   → ---------------------------
   [ φ ∨ ψ ] → A
-_∪_ {A} {φ} {ψ} f g {p} w = ∥∥-elim h q w where
-
-  h : [ φ ] ⊎ [ ψ ] → A
-  h (inl u) = f u
-  h (inr v) = g v
-
-  q : (z z' : [ φ ] ⊎ [ ψ ]) → h z ≡ h z'
-  q (inl _) (inl _) = cong f (eq [ φ ]ᴾ)
-  q (inl u) (inr v) = p u v
-  q (inr v) (inl u) = symm (p u v)
-  q (inr _) (inr _) = cong g (eq [ ψ ]ᴾ)
+_∪_ {A} {φ} {ψ} f g {p} = ∨-rec φ ψ f g p
 
 -- ----------------------------------------------------------------------
 -- -- Path filling from path composition

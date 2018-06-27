@@ -125,7 +125,7 @@ reflPath : {Γ : Set}{A : Γ → Set}{x : Γ}(a : A x) → Path A (x , (a , a))
 reflPath a = ((λ _ → a) , refl , refl)
 
 reflPath' : {A : Set}{a a' : A} → (a ≡ a') → a ~ a'
-reflPath' {A} {a} .{a} refl = ((λ _ → a) , (refl , refl))
+reflPath' {A} {a} {a'} p = ((λ _ → a) , (refl , p))
 
 reflPathEval : {A : Set}{a a' : A}(p : a ≡ a')(i : Int) → fst (reflPath' p) i ≡ a'
 reflPathEval refl i = refl

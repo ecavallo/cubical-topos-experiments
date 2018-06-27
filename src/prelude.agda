@@ -111,6 +111,18 @@ congdep :
   subst B p (f x) ≡ f y
 congdep _ refl = refl
 
+congindexed :
+  {ℓ ℓ' ℓ'' : Level}
+  {A : Set ℓ}
+  {B : A → Set ℓ'}
+  {C : A → Set ℓ''}
+  (f : (a : A) → B a → C a)
+  {x y : A} (p : x ≡ y)
+  {z : B x} {w : B y}
+  → subst B p z ≡ w
+  → subst C p (f x z) ≡ f y w
+congindexed _ refl refl = refl
+
 substconst :
   {ℓ ℓ' : Level}
   {A : Set ℓ}
@@ -124,7 +136,7 @@ substconst _ refl _ = refl
 
 subst₂ :
   {ℓ ℓ' : Level}
-  {A  A' : Set ℓ}
+  {A A' : Set ℓ}
   (B : A → A' → Set ℓ')
   {x y  : A}
   {x' y' : A'}
@@ -299,5 +311,5 @@ _×'_ : {A A' B B' : Set} → (A → A') → (B → B') → A × B → A' × B'
 ----------------------------------------------------------------------
 -- Dependent functions
 ----------------------------------------------------------------------
-Π : {ℓ m : Level} (A : Set ℓ) (B : A → Set m) → Set (ℓ ⊔ m)
+Π : {ℓ ℓ' : Level} (A : Set ℓ) (B : A → Set ℓ') → Set (ℓ ⊔ ℓ')
 Π A B = (a : A) → B a

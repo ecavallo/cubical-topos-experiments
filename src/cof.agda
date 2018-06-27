@@ -57,6 +57,9 @@ postulate
 
 [_] = prf ∘ [_]ᴾ
 
+cofCShift : (S : Shape) {r s : Loc S} → prf (S ∋ r ~> s) → Cof
+cofCShift S {r} {s} sh = cofShift S (shiftCompToFill S sh s)
+
 ----------------------------------------------------------------------
 -- Disjunction
 ----------------------------------------------------------------------
