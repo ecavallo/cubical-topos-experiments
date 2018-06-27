@@ -57,7 +57,7 @@ postulate
 [_] = prf ∘ [_]ᴾ
 
 postulate
-  cofExt : (φ ψ : Cof) → ([ φ ] → [ ψ ]) → ([ ψ ] → [ φ ]) → φ ≡ ψ
+  cofExt : {φ ψ : Cof} → ([ φ ] → [ ψ ]) → ([ ψ ] → [ φ ]) → φ ≡ ψ
 
 cofFace : (i : Int)(e : OI) → Cof
 cofFace i O' = cofShift int (fflip int (shiftCompToFill int O~>I i))

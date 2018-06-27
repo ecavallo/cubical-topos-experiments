@@ -134,20 +134,26 @@ abstract
 -- trivComp (A , α) e x a = fst (α e (λ _ → x) cofFalse ∅-elim (a , (λ ())))
 
 ----------------------------------------------------------------------
--- An extentionality principle for fibration structures
+-- Extensionality principles for fibration structures
 ----------------------------------------------------------------------
+fibExt' : ∀{ℓ}{Γ : Set ℓ}(A : Γ → Set){α α' : isFib A}(S : Shape)(p : Loc S → Γ)
+  → ((r s : Loc S)(sh : prf (S ∋ r ~> s))(φ : Cof)(f : [ φ ] → Π (Loc S) (A ∘ p))
+     (a₀ : ⟦ x₁ ∈ (A (p r)) ∣ (φ , f) ∙ r ↗ x₁ ⟧) → fst (α S p r s sh φ f a₀) ≡ fst (α' S p r s sh φ f a₀))
+  → α S p ≡ α' S p
+fibExt' A {α} {α'} S p ext =
+  funext λ r → funext λ s → funext λ sh → funext λ φ → funext λ f → funext λ x₁ →
+    incMono (λ x₀ → ((φ , f) ∙ s ↗ x₀) & (All eq ∈ (r ≡ s) , subst (A ∘ p) eq (fst x₁) ≈ x₀))
+      _ _
+      (ext r s sh φ f x₁)
+
 fibExt : ∀{ℓ}{Γ : Set ℓ}(A : Γ → Set){α α' : isFib A}
   → ((S : Shape)(p : Loc S → Γ)(r s : Loc S)(sh : prf (S ∋ r ~> s))(φ : Cof)
      (f : [ φ ] → Π (Loc S) (A ∘ p))
      (x₁ : ⟦ x₁ ∈ A (p r) ∣ (φ , f) ∙ r ↗ x₁ ⟧)
      → fst (α S p r s sh φ f x₁) ≡ fst (α' S p r s sh φ f x₁))
   → α ≡ α'
-fibExt A ext =
-  funext λ S → funext λ p → funext λ r → funext λ s → funext λ sh →
-    funext λ φ → funext λ f → funext λ x₁ →
-      incMono (λ x₀ → ((φ , f) ∙ s ↗ x₀) & (All eq ∈ (r ≡ s) , subst (A ∘ p) eq (fst x₁) ≈ x₀))
-        _ _
-        (ext S p r s sh φ f x₁)
+fibExt A {α} {α'} ext =
+  funext λ S → funext λ p → fibExt' A {α} {α'} S p (ext S p)
 
 ----------------------------------------------------------------------
 -- Terminal object is fibrant
