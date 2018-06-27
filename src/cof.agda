@@ -26,10 +26,6 @@ postulate
   Cof : Set
   [_]ᴾ : Cof → HProp₀
 
-  cofFace : (i : Int)(e : OI) → Cof
-  cofFace-[]ᴾ : (i : Int)(e : OI) → [ cofFace i e ]ᴾ ≡ (i ≈ ⟨ e ⟩)
-  {-# REWRITE cofFace-[]ᴾ #-}
-
   cofShift : (S : Shape) {r s : Loc S} → prf (S ∋ r ≈> s) → Cof
   cofShift-[]ᴾ : (S : Shape) {r s : Loc S} (sh : prf (S ∋ r ≈> s))
     → [ cofShift S sh ]ᴾ ≡ (r ≈ s)
@@ -40,7 +36,8 @@ postulate
   {-# REWRITE cof⊥-[]ᴾ #-}
 
   cofor : (P Q : Cof) → Cof
-  cofor-[]ᴾ : (P Q : Cof) → [ cofor P Q ]ᴾ ≡ ([ P ]ᴾ or [ Q ]ᴾ)
+  cofor-[]ᴾ : (P Q : Cof)
+    → [ cofor P Q ]ᴾ ≡ ([ P ]ᴾ or [ Q ]ᴾ)
   {-# REWRITE cofor-[]ᴾ #-}
 
   cof⊤ : Cof
@@ -48,14 +45,23 @@ postulate
   {-# REWRITE cof⊤-[]ᴾ #-}
 
   cof& : (P Q : Cof) → Cof
-  cof&-[]ᴾ : (P Q : Cof) → [ cof& P Q ]ᴾ ≡ ([ P ]ᴾ & [ Q ]ᴾ)
+  cof&-[]ᴾ : (P Q : Cof)
+    → [ cof& P Q ]ᴾ ≡ ([ P ]ᴾ & [ Q ]ᴾ)
   {-# REWRITE cof&-[]ᴾ #-}
 
   cof∀ : (S : Shape) (P : Loc S → Cof) → Cof
-  cof∀-[]ᴾ : (S : Shape) (P : Loc S → Cof) → [ cof∀ S P ]ᴾ ≡ (All r ∈ Loc S , [ P r ]ᴾ)
+  cof∀-[]ᴾ : (S : Shape) (P : Loc S → Cof)
+    → [ cof∀ S P ]ᴾ ≡ (All r ∈ Loc S , [ P r ]ᴾ)
   {-# REWRITE cof∀-[]ᴾ #-}
 
 [_] = prf ∘ [_]ᴾ
+
+postulate
+  cofExt : (φ ψ : Cof) → ([ φ ] → [ ψ ]) → ([ ψ ] → [ φ ]) → φ ≡ ψ
+
+cofFace : (i : Int)(e : OI) → Cof
+cofFace i O' = cofShift int (fflip int (shiftCompToFill int O~>I i))
+cofFace i I' = cofShift int (fflip int (shiftCompToFill int (cflip int O~>I) i))
 
 cofCShift : (S : Shape) {r s : Loc S} → prf (S ∋ r ~> s) → Cof
 cofCShift S {r} {s} sh = cofShift S (shiftCompToFill S sh s)
