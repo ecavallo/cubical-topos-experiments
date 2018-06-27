@@ -25,36 +25,35 @@ open import Data.paths
 ----------------------------------------------------------------------
 -- Dependent functions
 ----------------------------------------------------------------------
-Π' : {Γ : Set}(A : Γ → Set)(B : (Σ x ∈ Γ , A x) → Set) → Γ → Set
+Π' : ∀{ℓ}{Γ : Set ℓ}(A : Γ → Set)(B : (Σ x ∈ Γ , A x) → Set) → Γ → Set
 Π' A B x = (a : A x) → B (x , a)
 
-FibΠid :
-  {A : Int → Set}
-  {B : (Σ x ∈ Int , A x) → Set}
+FibΠ : ∀{ℓ}{Γ : Set ℓ}
+  {A : Γ → Set}
+  {B : (Σ x ∈ Γ , A x) → Set}
   (α : isFib A)
   (β : isFib B)
   → -----------
   isFib (Π' A B)
-FibΠid {A} {B} α β p r s sh φ f g = g₁ , (extends , trivial)
+FibΠ {Γ = Γ} {A} {B} α β S p r s sh φ f g = g₁ , (extends , trivial)
   where
-  pₐ : (a : A (p s)) → ΠI (A ∘ p)
-  pₐ a i = fst (compToFill (A ∘ p) (α p) s i (shiftCompToFill (cflip sh) i) cof⊥ ∅-elim (a , λ u → ∅-elim u))
+  pₐ : (a : A (p s)) → Π (Loc S) (A ∘ p)
+  pₐ a i = fst (compToFill S (A ∘ p) (α S p) s i (shiftCompToFill S (cflip S sh) i) cof⊥ ∅-elim (a , λ u → ∅-elim u))
 
   pₐs≡a : (a : A (p s)) → pₐ a s ≡ a
-  pₐs≡a a = symm (snd (snd (compToFill (A ∘ p) (α p) s s (shiftCompToFill (cflip sh) s) cof⊥ ∅-elim (a , λ u → ∅-elim u))) refl)
+  pₐs≡a a = symm (snd (snd (compToFill S (A ∘ p) (α S p) s s (shiftCompToFill S (cflip S sh) s) cof⊥ ∅-elim (a , λ u → ∅-elim u))) refl)
 
-  q : (a : A (p s)) → Int → Σ Int A
+  q : (a : A (p s)) → (Loc S) → Σ Γ A
   q a i = (p i , pₐ a i)
 
-  f' : (a : A (p s)) → [ φ ] → ΠI (B ∘ (q a))
+  f' : (a : A (p s)) → [ φ ] → Π (Loc S) (B ∘ (q a))
   f' a u i = f u i (pₐ a i)
 
   b₀ : (a : A (p s)) → ⟦ b ∈ (B (q a r)) ∣ (φ , f' a) ∙ r ↗ b ⟧
   b₀ a = (fst g (pₐ a r) , (λ u → cong (λ f → f (pₐ a r)) (snd g u)))
 
-  abstract
-    g₁ : (Π' A B) (p s)
-    g₁ a = subst (λ a → B (p s , a)) (pₐs≡a a) (fst (β (q a) r s sh φ (f' a) (b₀ a)))
+  g₁ : (Π' A B) (p s)
+  g₁ a = subst (λ a → B (p s , a)) (pₐs≡a a) (fst (β S (q a) r s sh φ (f' a) (b₀ a)))
 
   abstract
     extends : prf ((φ , f) ∙ s ↗ g₁)
@@ -63,8 +62,8 @@ FibΠid {A} {B} α β p r s sh φ f g = g₁ , (extends , trivial)
         → subst (λ a → B (p s , a)) (symm eq) b ≡ b' → b ≡ subst (λ a → B (p s , a)) eq b'
       substLemma refl refl = refl
 
-      f's≡g₁ : (a : A (p s)) → f' a u s ≡ fst (β (q a) r s sh φ (f' a) (b₀ a))
-      f's≡g₁ a = fst (snd (β (q a) r s sh φ (f' a) (b₀ a))) u
+      f's≡g₁ : (a : A (p s)) → f' a u s ≡ fst (β S (q a) r s sh φ (f' a) (b₀ a))
+      f's≡g₁ a = fst (snd (β S (q a) r s sh φ (f' a) (b₀ a))) u
 
       fs≡f's : (a : A (p s)) → subst (λ a₁ → B (p s , a₁)) (symm (pₐs≡a a)) (snd ((φ , f) ∙ s) u a) ≡ f' a u s
       fs≡f's a = congdep (λ a' → f u s a') (symm (pₐs≡a a))
@@ -73,19 +72,8 @@ FibΠid {A} {B} α β p r s sh φ f g = g₁ , (extends , trivial)
     trivial : (eq : r ≡ s) → subst (Π' A B ∘ p) eq (fst g) ≡ g₁
     trivial refl = funext λ a →
       trans
-        (cong (subst (λ a → B (p s , a)) (pₐs≡a a)) (snd (snd (β (q a) r r sh φ (f' a) (b₀ a))) refl))
+        (cong (subst (λ a → B (p s , a)) (pₐs≡a a)) (snd (snd (β S (q a) r r sh φ (f' a) (b₀ a))) refl))
         (symm (congdep (fst g) (pₐs≡a a)))
-
-
-FibΠ :
-  {Γ : Set}
-  {A : Γ → Set}
-  {B : (Σ x ∈ Γ , A x) → Set}
-  (α : isFib A)
-  (β : isFib B)
-  → -----------
-  isFib (Π' A B)
-FibΠ {Γ} {A} {B} α β p = FibΠid (reindex A α p) (reindex B β (p ×id)) id
 
 FibΠ' :
   {Γ : Set}
@@ -112,4 +100,4 @@ reindexΠ :
   (ρ : Δ → Γ)
   → ----------------------
   reindex (Π' A B) (FibΠ {B = B} α β) ρ ≡ FibΠ {B = B ∘ (ρ ×id)} (reindex A α ρ) (reindex B β (ρ ×id))
-reindexΠ A B α β ρ = refl
+reindexΠ A B α β ρ = fibExt (Π' A B ∘ ρ) (λ S p r s sh φ f x₁ → refl)

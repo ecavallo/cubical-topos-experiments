@@ -30,8 +30,9 @@ postulate
   cofFace-[]ᴾ : (i : Int)(e : OI) → [ cofFace i e ]ᴾ ≡ (i ≈ ⟨ e ⟩)
   {-# REWRITE cofFace-[]ᴾ #-}
 
-  cofShift : ∀{r s} → prf (r ≈> s) → Cof
-  cofShift-[]ᴾ : ∀{r s} (sh : prf (r ≈> s)) → [ cofShift sh ]ᴾ ≡ (r ≈ s)
+  cofShift : (S : Shape) {r s : Loc S} → prf (S ∋ r ≈> s) → Cof
+  cofShift-[]ᴾ : (S : Shape) {r s : Loc S} (sh : prf (S ∋ r ≈> s))
+    → [ cofShift S sh ]ᴾ ≡ (r ≈ s)
   {-# REWRITE cofShift-[]ᴾ #-}
 
   cof⊥ : Cof
@@ -50,8 +51,8 @@ postulate
   cof&-[]ᴾ : (P Q : Cof) → [ cof& P Q ]ᴾ ≡ ([ P ]ᴾ & [ Q ]ᴾ)
   {-# REWRITE cof&-[]ᴾ #-}
 
-  cof∀ : (P : Int → Cof) → Cof
-  cof∀-[]ᴾ : (P : Int → Cof) → [ cof∀ P ]ᴾ ≡ (All i ∈ Int , [ P i ]ᴾ)
+  cof∀ : (S : Shape) (P : Loc S → Cof) → Cof
+  cof∀-[]ᴾ : (S : Shape) (P : Loc S → Cof) → [ cof∀ S P ]ᴾ ≡ (All r ∈ Loc S , [ P r ]ᴾ)
   {-# REWRITE cof∀-[]ᴾ #-}
 
 [_] = prf ∘ [_]ᴾ
@@ -95,8 +96,9 @@ _↗_ : {A : Set} → □ A → A → HProp₀
 ΠI′ F p i = F i (p i)
 
 _∙_ :
-  {A : Int → Set}
+  {A : Set}
+  {B : A → Set}
   → -------------------------
-  □(ΠI A) → (i : Int) → □(A i)
+  □(Π A B) → (r : A) → □(B r)
 (φ , f) ∙ i = (φ , λ u → f u i)
 

@@ -22,29 +22,29 @@ open import cof
 ----------------------------------------------------------------------
 -- Path composition and filling
 ----------------------------------------------------------------------
-ShiftComp : (S : ShiftSet) → (Int → Set) → Set
-ShiftComp S A = ∀ r s →
-  (sh : prf (Shift S r s))(φ : Cof)(f : [ φ ] → ΠI A) →
+ShiftComp : (SS : ShiftSet) (S : Shape) → (Loc S → Set) → Set
+ShiftComp SS S A = (r s : Loc S) →
+  (sh : prf (Shift SS S r s))(φ : Cof)(f : [ φ ] → Π (Loc S) A) →
   (x₁ : ⟦ x₁ ∈ (A r) ∣ (φ , f) ∙ r ↗ x₁ ⟧) →
   ⟦ x₀ ∈ (A s) ∣ ((φ , f) ∙ s ↗ x₀) & (All eq ∈ (r ≡ s) , subst A eq (fst x₁) ≈ x₀)  ⟧
 
-shiftCompMap : (S₁ S₂ : ShiftSet)
-  → (∀ r s → prf (Shift S₁ r s) → prf (Shift S₂ r s))
-  → (A : Int → Set) → ShiftComp S₂ A → ShiftComp S₁ A
-shiftCompMap _ _ F _ α r s sh = α r s (F _ _ sh)
+shiftCompMap : (SS₁ SS₂ : ShiftSet) (S : Shape)
+  → (∀ r s → prf (Shift SS₁ S r s) → prf (Shift SS₂ S r s))
+  → (A : Loc S → Set) → ShiftComp SS₂ S A → ShiftComp SS₁ S A
+shiftCompMap _ _ _ F _ α r s sh = α r s (F _ _ sh)
 
 Comp = ShiftComp compShift
 Fill = ShiftComp fillShift
 
-fillToComp : (A : Int → Set) → Fill A → Comp A
-fillToComp = shiftCompMap compShift fillShift (λ r s sh → shiftCompToFill sh s)
+fillToComp : (S : Shape) (A : Loc S → Set) → Fill S A → Comp S A
+fillToComp S = shiftCompMap compShift fillShift S (λ r s sh → shiftCompToFill S sh s)
 
 postulate
-  compToFill : (A : Int → Set) → Comp A → Fill A
-  compToFill-β : (A : Int → Set)(α : Comp A)(r s : Int)
-    (sh : prf (r ~> s))(φ : Cof)(f : [ φ ] → ΠI A) →
+  compToFill : (S : Shape) (A : Loc S → Set) → Comp S A → Fill S A
+  compToFill-β : (S : Shape)(A : Loc S → Set)(α : Comp S A)(r s : Loc S)
+    (sh : prf (S ∋ r ~> s))(φ : Cof)(f : [ φ ] → Π (Loc S) A) →
     (x₁ : ⟦ x₁ ∈ (A r) ∣ (φ , f) ∙ r ↗ x₁ ⟧)
-    → compToFill A α r s (shiftCompToFill sh s) φ f x₁ ≡ α r s sh φ f x₁
+    → compToFill S A α r s (shiftCompToFill S sh s) φ f x₁ ≡ α r s sh φ f x₁
   {-# REWRITE compToFill-β #-}
   
 
@@ -52,7 +52,7 @@ postulate
 -- Fibrations
 ----------------------------------------------------------------------
 isFib : ∀{a}{Γ : Set a}(A : Γ → Set) → Set a
-isFib {Γ = Γ} A = (p : Int → Γ) → Comp (A ∘ p)
+isFib {Γ = Γ} A = (S : Shape) (p : Loc S → Γ) → Comp S (A ∘ p)
 
 Fib : ∀{a}(Γ : Set a) → Set (lsuc lzero ⊔ a)
 Fib {a} Γ = Σ (Γ → Set) isFib
@@ -61,7 +61,7 @@ Fib {a} Γ = Σ (Γ → Set) isFib
 -- Fibrations can be reindexed
 ----------------------------------------------------------------------
 reindex : ∀{a a'}{Δ : Set a}{Γ : Set a'}(A : Γ → Set)(α : isFib A)(ρ : Δ → Γ) → isFib (A ∘ ρ)
-reindex A α ρ p = α (ρ ∘ p)
+reindex A α ρ S p = α S (ρ ∘ p)
 
 reindex' : ∀{a a'}{Δ : Set a}{Γ : Set a'}(Aα : Fib Γ)(ρ : Δ → Γ) → Fib Δ
 reindex' (A , α) ρ = (A ∘ ρ , reindex A α ρ)
@@ -133,30 +133,34 @@ abstract
 -- trivComp : {Γ : Set}(A : Fib Γ)(e : OI)(x : Γ)(a : fst A x) → fst A x
 -- trivComp (A , α) e x a = fst (α e (λ _ → x) cofFalse ∅-elim (a , (λ ())))
 
--- ----------------------------------------------------------------------
--- -- An extentionality principle for fibration structures
--- ----------------------------------------------------------------------
--- fibExt : {Γ : Set}{A : Γ → Set}{α α' : isFib A}
---   → ((e : OI)(p : Int → Γ)
---      (φ : Cof)(f : [ φ ] → Π (A ∘ p))
---      (a₀ : ⟦ x₁ ∈ (A (p ⟨ e ⟩)) ∣ (φ , f) ∙ ⟨ e ⟩ ↗ x₁ ⟧) → fst (α e p φ f a₀) ≡ fst (α' e p φ f a₀))
---   → α ≡ α'
--- fibExt {α = α} {α'} ext =
---   funext (λ e → funext (λ p → funext (λ φ → funext (λ f →
---     funext (λ a₀ → incMono (λ x → (φ , f) ∙ ⟨ ! e ⟩ ↗ x) (α e p φ f a₀) (α' e p φ f a₀) (ext e p φ f a₀))))))
+----------------------------------------------------------------------
+-- An extentionality principle for fibration structures
+----------------------------------------------------------------------
+fibExt : ∀{ℓ}{Γ : Set ℓ}(A : Γ → Set){α α' : isFib A}
+  → ((S : Shape)(p : Loc S → Γ)(r s : Loc S)(sh : prf (S ∋ r ~> s))(φ : Cof)
+     (f : [ φ ] → Π (Loc S) (A ∘ p))
+     (x₁ : ⟦ x₁ ∈ A (p r) ∣ (φ , f) ∙ r ↗ x₁ ⟧)
+     → fst (α S p r s sh φ f x₁) ≡ fst (α' S p r s sh φ f x₁))
+  → α ≡ α'
+fibExt A ext =
+  funext λ S → funext λ p → funext λ r → funext λ s → funext λ sh →
+    funext λ φ → funext λ f → funext λ x₁ →
+      incMono (λ x₀ → ((φ , f) ∙ s ↗ x₀) & (All eq ∈ (r ≡ s) , subst (A ∘ p) eq (fst x₁) ≈ x₀))
+        _ _
+        (ext S p r s sh φ f x₁)
 
 ----------------------------------------------------------------------
 -- Terminal object is fibrant
 ----------------------------------------------------------------------
 FibUnit : {Γ : Set} → isFib(λ(_ : Γ) → Unit)
-fst (FibUnit _ _ _ _ _ _ (unit , _))   = unit
-snd (FibUnit _ _ _ _ _ _ (unit , _))   = (λ _ → refl) , (λ _ → refl)
+fst (FibUnit _ _ _ _ _ _ _ (unit , _))   = unit
+snd (FibUnit _ _ _ _ _ _ _ (unit , _))   = (λ _ → refl) , (λ _ → refl)
 
 ----------------------------------------------------------------------
 -- Initial object is fibrant
 ----------------------------------------------------------------------
 Fib∅ : {Γ : Set} → isFib(λ(_ : Γ) → ∅)
-Fib∅ _ _ _ _ _ _ (() , _)
+Fib∅ _ _ _ _ _ _ _ (() , _)
 
 ----------------------------------------------------------------------
 -- Fibrations are closed under isomorphism
@@ -165,15 +169,15 @@ _≅_ : {Γ : Set}(A B : Γ → Set) → Set
 _≅_ {Γ} A B = (x : Γ) → Σ f ∈ (A x → B x) , Σ g ∈ (B x → A x) , (g ∘ f ≡ id) × (f ∘ g ≡ id)
 
 FibIso : {Γ : Set}(A B : Γ → Set) → (A ≅ B) → isFib A → isFib B
-FibIso A B iso α p r s sh φ q b = b'
+FibIso A B iso α S p r s sh φ q b = b'
   where
-  f : (i : Int) → A (p i) → B (p i)
+  f : (i : Loc S) → A (p i) → B (p i)
   f i = fst (iso (p i))
 
-  g : (i : Int) → B (p i) → A (p i)
+  g : (i : Loc S) → B (p i) → A (p i)
   g i = fst (snd (iso (p i)))
 
-  q' : [ φ ] → ΠI (A ∘ p)
+  q' : [ φ ] → Π (Loc S) (A ∘ p)
   q' u i = g i (q u i)
 
   a : ⟦ a ∈ ((A ∘ p) r) ∣ ((φ , q') ∙ r) ↗ a ⟧
@@ -181,7 +185,7 @@ FibIso A B iso α p r s sh φ q b = b'
   snd a u = cong (g r) (snd b u)
 
   a' : ⟦ a' ∈ ((A ∘ p) s) ∣ ((φ , q') ∙ s) ↗ a' & (All eq ∈ (r ≡ s) , subst (A ∘ p) eq (fst a) ≈ a') ⟧
-  a' = α p r s sh φ q' a
+  a' = α S p r s sh φ q' a
 
   b' : ⟦ b' ∈ ((B ∘ p) s) ∣ ((φ , q) ∙ s) ↗ b' & (All eq ∈ (r ≡ s) , subst (B ∘ p) eq (fst b) ≈ b') ⟧
   fst b' = f s (fst a')

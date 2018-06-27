@@ -183,14 +183,14 @@ or-elim-eq : ∀{ℓ m n}
   {A : Set ℓ} {B : Set m} {C : Set n}
   (f : prf ∥ A ⊎ B ∥ → C)
   (c : C)
-  (p : {l : A} → f ∣ inl l ∣ ≡ c)
-  (q : {r : B} → f ∣ inr r ∣ ≡ c)
+  (p : (l : A) → f ∣ inl l ∣ ≡ c)
+  (q : (r : B) → f ∣ inr r ∣ ≡ c)
   → ---------------------------
   (u : prf ∥ A ⊎ B ∥) → f u ≡ c
 or-elim-eq {A = A} {B} {C} f c p q u = ∥∥-elim cases uip' u where
   cases : A ⊎ B → f u ≡ c
-  cases (inl l) = subst (λ u → f u ≡ c) (equ ∥ A ⊎ B ∥ ∣ inl l ∣ u) p
-  cases (inr r) = subst (λ u → f u ≡ c) (equ ∥ A ⊎ B ∥ ∣ inr r ∣ u) q
+  cases (inl l) = subst (λ u → f u ≡ c) (equ ∥ A ⊎ B ∥ ∣ inl l ∣ u) (p l)
+  cases (inr r) = subst (λ u → f u ≡ c) (equ ∥ A ⊎ B ∥ ∣ inr r ∣ u) (q r)
   uip' : (x x' : A ⊎ B) → cases x ≡ cases x'
   uip' x x' = uip (cases x) (cases x')
 

@@ -17,10 +17,23 @@ open import hprop
 open import logic
 open import interval
 
+record ShapeSet : Set₁ where
+  field
+    Shape : Set₀
+    Loc : Shape → Set₀
+    int : Shape
+    Loc-int : Loc int ≡ Int
+    
+postulate
+  shapeSet : ShapeSet
+
+open ShapeSet shapeSet public
+{-# REWRITE Loc-int #-}
+
 record ShiftSet : Set₁ where
   field
-    Shift : Int → Int → HProp₀
-    flipshift : {r s : Int} → prf (Shift r s) → prf (Shift s r)
+    Shift : (S : Shape) → Loc S → Loc S → HProp₀
+    flipshift : (S : Shape) {r s : Loc S} → prf (Shift S r s) → prf (Shift S s r)
 
 open ShiftSet public
 
@@ -28,9 +41,9 @@ postulate
   compShift : ShiftSet
   fillShift : ShiftSet
 
-open ShiftSet compShift public renaming (Shift to _~>_; flipshift to cflip)
-open ShiftSet fillShift public renaming (Shift to _≈>_; flipshift to fflip)
+open ShiftSet compShift public renaming (Shift to _∋_~>_; flipshift to cflip)
+open ShiftSet fillShift public renaming (Shift to _∋_≈>_; flipshift to fflip)
 
 postulate
-  O~>I : prf (O ~> I)
-  shiftCompToFill : {r s : Int} → prf (r ~> s) → ((i : Int) → prf (r ≈> i))
+  O~>I : prf (int ∋ O ~> I)
+  shiftCompToFill : (S : Shape) {r s : Loc S} → prf (S ∋ r ~> s) → ((i : Loc S) → prf (S ∋ r ≈> i))
