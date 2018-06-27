@@ -165,10 +165,10 @@ Fib∅ _ _ _ _ _ _ _ (() , _)
 ----------------------------------------------------------------------
 -- Fibrations are closed under isomorphism
 ----------------------------------------------------------------------
-_≅_ : {Γ : Set}(A B : Γ → Set) → Set
-_≅_ {Γ} A B = (x : Γ) → Σ f ∈ (A x → B x) , Σ g ∈ (B x → A x) , (g ∘ f ≡ id) × (f ∘ g ≡ id)
+_≅_ : ∀{ℓ} {Γ : Set ℓ}(A B : Γ → Set) → Set ℓ
+_≅_ {Γ = Γ} A B = (x : Γ) → Σ f ∈ (A x → B x) , Σ g ∈ (B x → A x) , (g ∘ f ≡ id) × (f ∘ g ≡ id)
 
-FibIso : {Γ : Set}(A B : Γ → Set) → (A ≅ B) → isFib A → isFib B
+FibIso : ∀{ℓ}{Γ : Set ℓ}(A B : Γ → Set) → (A ≅ B) → isFib A → isFib B
 FibIso A B iso α S p r s sh φ q b = b'
   where
   f : (i : Loc S) → A (p i) → B (p i)
